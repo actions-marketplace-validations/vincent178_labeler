@@ -1,6 +1,7 @@
 package labeler
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,6 +21,7 @@ type LabelMatcher struct {
 	Title     string
 	Branch    string
 	Files     []string
+	Authors   []string
 	Mergeable string
 	SizeBelow string `yaml:"size-below"`
 	SizeAbove string `yaml:"size-above"`
@@ -161,6 +163,27 @@ func NewSizeCondition() Condition {
 	}
 }
 
+func NewAuthorCondition() Condition {
+	return Condition{
+		GetName: func() string {
+			return "Pull Request author in a list"
+		},
+		Evaluate: func(pr *gh.PullRequest, matcher LabelMatcher) (bool, error) {
+			if len(matcher.Authors) <= 0 {
+				return false, errors.New("authors are not set in config")
+			}
+
+			log.Printf("Matching `%s` against: %s", strings.Join(matcher.Authors, ", "), *pr.User.Login)
+			for _, authorMatcher := range matcher.Authors {
+				if authorMatcher == *pr.User.Login {
+					return true, nil
+				}
+			}
+			return false, nil
+		},
+	}
+}
+
 // HandleEvent takes a GitHub Event and its raw payload (see link below)
 // to trigger an update to the issue / PR's labels.
 //
@@ -233,6 +256,7 @@ func (l *Labeler) findMatches(pr *gh.PullRequest, config *LabelerConfigV1) (Labe
 		NewIsMergeableCondition(),
 		NewSizeCondition(),
 		NewFilesCondition(),
+		NewAuthorCondition(),
 	}
 
 	for _, matcher := range config.Labels {

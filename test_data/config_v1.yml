@@ -17,3 +17,6 @@ labels:
     files: 
     - "cmd/.*.go"
     - "pkg/.*.go"
+  - label: "TestAuthorMatch"
+    authors:
+    - "jojo"

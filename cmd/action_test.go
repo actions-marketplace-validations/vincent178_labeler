@@ -125,6 +125,12 @@ func TestGetLabelerConfigV1(t *testing.T) {
 					"pkg/.*.go",
 				},
 			},
+			l.LabelMatcher{
+				Label: "TestAuthorMatch",
+				Authors: []string{
+					"jojo",
+				},
+			},
 		},
 	}
 
